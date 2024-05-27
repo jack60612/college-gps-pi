@@ -225,6 +225,7 @@ class GPSDisplay:
             self.save_data()
             self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
             self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint deleted!"], buttons=buttons)
+            return
         elif button == LCDButton.KEY2:
             # Move to the previous waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(self.saved_data.waypoints)
