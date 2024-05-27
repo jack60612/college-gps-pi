@@ -49,7 +49,7 @@ class LCDHandler:
         # Make max line length 20 characters, raise error
         for line in lines:
             if len(line) > 20:
-                raise ValueError("Line too long")
+                raise ValueError(f"Line {line} too long")
         # page number on top,
         lines.insert(0, f"Page {page_number.value}")
         if colors is not None:
