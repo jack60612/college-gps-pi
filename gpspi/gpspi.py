@@ -7,8 +7,8 @@ import gps
 
 from gpspi.button_handler import ButtonHandler, LCDButton
 from gpspi.LCD_handler import LCDHandler
-from gpspi.Page import Page
 from gpspi.types.GPS_data import GPSData
+from gpspi.types.page import Page
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
 
 # GPIO Pins
