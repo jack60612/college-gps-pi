@@ -164,7 +164,7 @@ class GPSDisplay:
         color = (0, 255, 0) if self.gps_data.in_sync else (255, 0, 0)
         self.lcd_handler.display_text(
             Page.GPS_COORDINATES,
-            [f"Lat: {self.gps_data.latitude}", f"Lon: {self.gps_data.longitude}"],
+            ["Current Cords", "Green = recent", f"Lat: {self.gps_data.latitude}", f"Lon: {self.gps_data.longitude}"],
             colors=[color, color],
             buttons=["N/A", "N/A", "N/A"],
         )
