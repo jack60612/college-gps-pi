@@ -131,7 +131,7 @@ class GPSDisplay:
     # GUI Functions
 
     def update_display(self, button: Optional[LCDButton] = None) -> None:
-        if not self.gps_data.time is None:
+        if self.gps_data.time is None:
             self.lcd_handler.display_text(["No GPS data"])
             return
         if self.current_screen == Page.TIME_AND_SATELLITES:
