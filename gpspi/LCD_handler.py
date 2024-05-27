@@ -51,7 +51,7 @@ class LCDHandler:
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
         y = 0
         for i, line in enumerate(lines):
-            color = (255, 255, 255) if not colors else colors[i + 1]
+            color = (255, 255, 255) if not colors else colors[i]
             self.draw.text((0, y), line, font=self.font, fill=color)
             y += 10
 
@@ -60,7 +60,7 @@ class LCDHandler:
             # draw from other side
             for i, button in enumerate(buttons):
                 self.draw.text(
-                    (self.width - 20, ((self.height * i) / 3) - 5), button, font=self.font, fill=(255, 255, 255)
+                    (self.width - 20, ((self.height * i) / 3) + 5), button, font=self.font, fill=(255, 255, 255)
                 )
 
         self.disp.LCD_ShowImage(self.image, 0, 0)
