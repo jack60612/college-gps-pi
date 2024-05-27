@@ -1,8 +1,8 @@
 import logging
 from typing import Optional
-from gpspi.ButtonHandler import ButtonHandler, LCDButton
-from gpspi.SavedData import DictSavedData, SavedData, Waypoint
-from gpspi.LCDHandler import LCDHandler
+from gpspi.button_handler import ButtonHandler, LCDButton
+from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
+from gpspi.LCD_handler import LCDHandler
 import gps
 import time
 import json
