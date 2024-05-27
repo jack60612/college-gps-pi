@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 import logging
 from typing import Optional, TypedDict
 from gpspi.ButtonHandler import ButtonHandler, LCDButton
@@ -26,15 +27,52 @@ class Page(Enum):
     COMPASS_HEADING_AND_SPEED: int = 4
 
 
-class Waypoint(TypedDict):
+class DictWaypoint(TypedDict):
     latitude: float
     longitude: float
     altitude: float
 
 
-class savedData(TypedDict):
-    destination: Waypoint
-    waypoints: list[Waypoint]
+class DictSavedData(TypedDict):
+    destination: Optional[DictWaypoint]
+    waypoints: list[DictWaypoint]
+
+
+@dataclass(frozen=True)
+class Waypoint:
+    latitude: float
+    longitude: float
+    altitude: float
+
+    @classmethod
+    def from_dict(cls, data: DictWaypoint) -> "Waypoint":
+        return cls(data["latitude"], data["longitude"], data["altitude"])
+
+    def to_dict(self) -> "DictWaypoint":
+        return {
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "altitude": self.altitude,
+        }
+
+
+@dataclass
+class SavedData:
+    destination: Optional[Waypoint] = None
+    waypoints: list[Waypoint] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: DictSavedData) -> "SavedData":
+        return cls(
+            Waypoint.from_dict(data["destination"]) if data["destination"] else None,
+            [Waypoint.from_dict(waypoint) for waypoint in data["waypoints"]],
+        )
+
+    def to_dict(self) -> "DictSavedData":
+        return {
+            "destination": self.destination.to_dict() if self.destination else None,
+            "waypoints": [waypoint.to_dict() for waypoint in self.waypoints],
+        }
 
 
 class GPSDisplay:
@@ -51,32 +89,23 @@ class GPSDisplay:
         # Screen variables
         self.current_screen: Page = Page.TIME_AND_SATELLITES
         self.total_screens: int = 4
-        self.saved_data: savedData = self.load_data()
-        self.cur_destination: Waypoint = self.saved_data["destination"]
-        self.cur_waypoints: list[Waypoint] = self.saved_data["waypoints"]
+        self.saved_data: SavedData = self.load_data()
         self.cur_waypoint_index: int = 0
 
         # Configure button callbacks
         self.gpio_handler.configure_callbacks(self.button_callback)
         logging.info("Button callbacks configured")
 
-    def load_data(self) -> savedData:
+    def load_data(self) -> SavedData:
         try:
             with open("destination.json", "r") as f:
-                return savedData(**json.load(f))  # type: ignore
+                return SavedData(DictSavedData(**json.load(f)))  # type: ignore
         except FileNotFoundError:
-            return savedData(
-                {
-                    "destination": Waypoint(
-                        {"latitude": 0, "longitude": 0, "altitude": 0}
-                    ),
-                    "waypoints": [],
-                }
-            )
+            return SavedData()
 
     def save_data(self) -> None:
         with open("destination.json", "w") as f:
-            json.dump(self.saved_data, f)
+            json.dump(self.saved_data.to_dict(), f)
 
     def button_callback(self, button: LCDButton) -> None:
         if button == LCDButton.UP:
@@ -163,27 +192,29 @@ class GPSDisplay:
     def display_select_destination(self, button: Optional[LCDButton] = None) -> None:
         if button == LCDButton.KEY1:
             # Set the destination to the nearest town (mock implementation)
-            self.cur_destination = self.get_nearest_town()
-            self.saved_data["destination"] = self.cur_destination
+            self.saved_data.destination = self.get_nearest_town()
             self.save_data()
         elif button == LCDButton.KEY2:
             # Set the destination to the nearest road (mock implementation)
-            self.cur_destination = self.get_nearest_road()
-            self.saved_data["destination"] = self.cur_destination
+            self.saved_data.destination = self.get_nearest_road()
             self.save_data()
         elif button == LCDButton.KEY3:
             # Select the destination from a list of waypoints
-            self.cur_destination = self.cur_waypoints[self.cur_waypoint_index]
-            self.saved_data["destination"] = self.cur_destination
+            self.saved_data.destination = self.saved_data.waypoints[
+                self.cur_waypoint_index
+            ]
             self.save_data()
 
-        self.lcd_handler.display_text(
-            [
-                f"Destination set to:",
-                f"Lat: {self.cur_destination['latitude']}",
-                f"Lon: {self.cur_destination['longitude']}",
-            ]
-        )
+        if self.saved_data.destination:
+            self.lcd_handler.display_text(
+                [
+                    f"Destination set to:",
+                    f"Lat: {self.saved_data.destination.latitude}",
+                    f"Lon: {self.saved_data.destination.longitude}",
+                ]
+            )
+        else:
+            self.lcd_handler.display_text(["No destination set"])
 
     def display_select_waypoints(
         self, gps_data, button: Optional[LCDButton] = None
@@ -195,15 +226,13 @@ class GPSDisplay:
                     longitude=float(gps_data["longitude"]),
                     altitude=float(gps_data["altitude"]),
                 )
-                self.cur_waypoints.append(new_waypoint)
-                self.saved_data["waypoints"] = self.cur_waypoints
+                self.saved_data.waypoints.append(new_waypoint)
                 self.save_data()
                 self.lcd_handler.display_text(["Waypoint saved!"])
         elif button == LCDButton.KEY1:
             # Delete the current waypoint (confirmation can be added if needed)
-            if self.cur_waypoints:
-                del self.cur_waypoints[self.cur_waypoint_index]
-                self.saved_data["waypoints"] = self.cur_waypoints
+            if self.saved_data.waypoints:
+                del self.saved_data.waypoints[self.cur_waypoint_index]
                 self.save_data()
                 self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
                 self.lcd_handler.display_text(["Waypoint deleted!"])
@@ -212,35 +241,38 @@ class GPSDisplay:
         elif button == LCDButton.KEY2:
             # Move to the previous waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(
-                self.cur_waypoints
+                self.saved_data.waypoints
             )
         elif button == LCDButton.KEY3:
             # Move to the next waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index + 1) % len(
-                self.cur_waypoints
+                self.saved_data.waypoints
             )
 
-        if self.cur_waypoints:
-            waypoint = self.cur_waypoints[self.cur_waypoint_index]
+        if self.saved_data.waypoints:
+            waypoint = self.saved_data.waypoints[self.cur_waypoint_index]
             self.lcd_handler.display_text(
                 [
-                    f"Waypoint {self.cur_waypoint_index + 1}/{len(self.cur_waypoints)}",
-                    f"Lat: {waypoint['latitude']}",
-                    f"Lon: {waypoint['longitude']}",
-                    f"Alt: {waypoint['altitude']}",
+                    f"Waypoint {self.cur_waypoint_index + 1}/{len(self.saved_data.waypoints)}",
+                    f"Lat: {waypoint.latitude}",
+                    f"Lon: {waypoint.longitude}",
+                    f"Alt: {waypoint.altitude}",
                 ]
             )
         else:
             self.lcd_handler.display_text(["No waypoints saved"])
 
     def display_compass_heading_and_speed(self, gps_data, button) -> None:
-        self.lcd_handler.display_text(
-            [
-                f"Heading to: {self.cur_destination['latitude']}, {self.cur_destination['longitude']}",
-                f"Speed: {gps_data['speed']}",
-                f"Compass: {self.compass_heading(gps_data, self.cur_destination)}",
-            ]
-        )
+        if self.saved_data.destination:
+            self.lcd_handler.display_text(
+                [
+                    f"Heading to: {self.saved_data.destination.latitude}, {self.saved_data.destination.longitude}",
+                    f"Speed: {gps_data['speed']}",
+                    f"Compass: {self.compass_heading(gps_data, self.saved_data.destination)}",
+                ]
+            )
+        else:
+            self.lcd_handler.display_text(["No destination set"])
 
     def main_loop(self) -> None:
         try:
