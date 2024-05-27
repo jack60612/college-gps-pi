@@ -248,8 +248,9 @@ class GPSDisplay:
             self.lcd_handler.display_text(
                 Page.COMPASS_HEADING_AND_SPEED,
                 [
-                    f"Cur Crds:LAT {self.gps_data.latitude},Lng {self.gps_data.longitude}",
-                    f"Tgt Crds:LAT {self.saved_data.destination.latitude},Lng {self.saved_data.destination.longitude}",
+                    f"LAT{self.gps_data.latitude}Lng{self.gps_data.longitude}",
+                    "Cur Crds^, Tgt Crdsv",
+                    f"LAT{self.saved_data.destination.latitude}Lng{self.saved_data.destination.longitude}",
                     f"Cur Speed:{self.gps_data.speed * gps.MPS_TO_MPH} MPH",
                     f"Cur Heading:{self.gps_data.mag_heading} Deg(mag)",
                     f"Tgt Heading:{self.compass_heading(self.saved_data.destination)} Deg(mag)",
