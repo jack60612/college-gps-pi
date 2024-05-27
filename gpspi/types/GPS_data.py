@@ -25,7 +25,7 @@ class GPSData:
 
     @property
     def num_satellites(self) -> int:
-        return len(self.satellites)
+        return len(self.satellites) if self.satellites is not None else 0
 
     def update_position_data(
         self,
@@ -37,14 +37,14 @@ class GPSData:
         true_heading: Optional[float],
         mag_heading: Optional[float],
     ) -> None:
-        self.latitude = latitude if latitude else self.latitude
-        self.longitude = longitude if longitude else self.longitude
-        self.altitude = altitude if altitude else self.altitude
-        self.speed = speed if speed else self.speed
-        self.time = datetime.datetime.fromisoformat(time) if time else self.time
-        self.true_heading = true_heading if true_heading else self.true_heading
-        self.mag_heading = mag_heading if mag_heading else self.mag_heading
+        self.latitude = latitude if latitude is not None else self.latitude
+        self.longitude = longitude if longitude is not None else self.longitude
+        self.altitude = altitude if altitude is not None else self.altitude
+        self.speed = speed if speed is not None else self.speed
+        self.time = datetime.datetime.fromisoformat(time) if time is not None else self.time
+        self.true_heading = true_heading if true_heading is not None else self.true_heading
+        self.mag_heading = mag_heading if mag_heading is not None else self.mag_heading
 
     def update_satellite_data(self, time: Optional[str], satellites: list[dict[str, object]]) -> None:
-        self.time = datetime.datetime.fromisoformat(time) if time else self.time
-        self.satellites = satellites if satellites else self.satellites
+        self.time = datetime.datetime.fromisoformat(time) if time is not None else self.time
+        self.satellites = satellites if satellites is not None else self.satellites
