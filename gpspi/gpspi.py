@@ -51,7 +51,7 @@ class GPSDisplay:
     def load_data(self) -> SavedData:
         try:
             with open("destination.json", "r") as f:
-                return SavedData(DictSavedData(**json.load(f)))  # type: ignore
+                return SavedData.from_dict(DictSavedData(**json.load(f)))  # type: ignore[typeddict-item]
         except FileNotFoundError:
             return SavedData()
 
