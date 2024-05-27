@@ -1,6 +1,7 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 from gpspi.button_handler import ButtonHandler, LCDButton
+from gpspi.types.GPS_data import GPSData
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
 from gpspi.LCD_handler import LCDHandler
 import gps
@@ -38,6 +39,9 @@ class GPSDisplay:
         self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
         logging.info("Connected to GPSD")
 
+        # GPS data
+        self.gps_data: GPSData = GPSData()
+
         # Screen variables
         self.current_screen: Page = Page.TIME_AND_SATELLITES
         self.total_screens: int = 4
@@ -47,6 +51,8 @@ class GPSDisplay:
         # Configure button callbacks
         self.gpio_handler.configure_callbacks(self.button_callback)
         logging.info("Button callbacks configured")
+
+    # Util Functions
 
     def load_data(self) -> SavedData:
         try:
@@ -71,19 +77,37 @@ class GPSDisplay:
         else:
             self.update_display(button)
 
-    def get_gps_data(self):
+    # Parse GPS Data
+
+    def update_gps_data(self) -> None:
         try:
-            report = self.session.next()
-            if report["class"] == "TPV":
-                return {
-                    "latitude": getattr(report, "lat", "NA"),
-                    "longitude": getattr(report, "lon", "NA"),
-                    "altitude": getattr(report, "alt", "NA"),
-                    "speed": getattr(report, "speed", "NA"),
-                    "sats": len(getattr(report, "satellites", [])),
-                    "time": getattr(report, "time", "NA"),
-                }
-        except (KeyError, StopIteration):
+            report = dict(self.session.next())
+            if report["class"] == "TPV":  # Time, Position, Velocity report
+                # parse data
+                latitude: Optional[float] = report.get("lat")
+                longitude: Optional[float] = report.get("lon")
+                altitude: Optional[float] = report.get("alt")
+                speed: Optional[float] = report.get("speed")
+                time: Optional[str] = report.get("time")
+                true_heading: Optional[float] = report.get("track")
+                mag_heading: Optional[float] = report.get("magtrack")
+
+                self.gps_data.update_position_data(
+                    latitude=latitude,
+                    longitude=longitude,
+                    altitude=altitude,
+                    speed=speed,
+                    time=time,
+                    true_heading=true_heading,
+                    mag_heading=mag_heading,
+                )
+
+            if report["class"] == "SKY":  # Satellite information
+                time = report.get("time")
+                satellites: list[dict[str, Any]] = report.get("satellites", [{}])
+                self.gps_data.update_satellite_data(time=time, satellites=satellites)
+
+        except (TypeError, KeyError, StopIteration):
             return None
 
     def get_nearest_town(self) -> Waypoint:
@@ -96,48 +120,56 @@ class GPSDisplay:
         # TODO: Implement this
         return Waypoint(latitude=40.7128, longitude=-75.0060, altitude=10)
 
-    def compass_heading(self, gps_data, destination) -> str:
+    def compass_heading(self, destination) -> str:
         """Return the compass heading from the current location to the destination, ex 60 degrees east."""
         # TODO: Implement this
         return "Not Implemented"
 
+    def calculate_distance(self, destination) -> float:
+        """Return the distance from the current location to the destination in meters."""
+        # TODO: Implement this
+        return 0
+
+    # GUI Functions
+
     def update_display(self, button: Optional[LCDButton] = None) -> None:
-        gps_data = self.get_gps_data()
-        if gps_data is None:
+        if not self.gps_data.time is None:
             self.lcd_handler.display_text(["No GPS data"])
             return
         if self.current_screen == Page.TIME_AND_SATELLITES:
-            self.display_time_and_satellites(gps_data, button)
+            self.display_time_and_satellites(button)
         elif self.current_screen == Page.GPS_COORDINATES:
-            self.display_gps_coordinates(gps_data, button)
+            self.display_gps_coordinates(button)
         elif self.current_screen == Page.SELECT_DESTINATION:
             self.display_select_destination(button)
         elif self.current_screen == Page.SELECT_WAYPOINTS:
-            self.display_select_waypoints(gps_data, button)
+            self.display_select_waypoints(button)
         elif self.current_screen == Page.COMPASS_HEADING_AND_SPEED:
-            self.display_compass_heading_and_speed(gps_data, button)
+            self.display_compass_heading_and_speed(button)
 
-    def display_time_and_satellites(
-        self, gps_data, button: Optional[LCDButton] = None
-    ) -> None:
+    def display_time_and_satellites(self, button: Optional[LCDButton] = None) -> None:
+        assert self.gps_data.time is not None
+        if button == LCDButton.KEY1:
+            # increase brightness
+            self.lcd_handler.raise_brightness()
+        elif button == LCDButton.KEY2:
+            # decrease brightness
+            self.lcd_handler.lower_brightness()
+        elif button == LCDButton.KEY3:
+            # reset brightness
+            self.lcd_handler.reset_brightness()
         self.lcd_handler.display_text(
             [
-                time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
-                f"Satellites: {gps_data['sats']}",
-                f"Sync: {'Yes' if gps_data['time'] != 'NA' else 'No'}",
+                time.strftime("%Y-%m-%d %H:%M:%S", self.gps_data.time.timetuple()),
+                f"Satellites connected: {self.gps_data.num_satellites}",
+                f"Sync: {'Yes' if self.gps_data.in_sync else 'No'}",
             ]
         )
 
-    def display_gps_coordinates(
-        self, gps_data, button: Optional[LCDButton] = None
-    ) -> None:
-        color = (
-            (0, 255, 0)
-            if gps_data["latitude"] != "NA" and gps_data["longitude"] != "NA"
-            else (255, 0, 0)
-        )
+    def display_gps_coordinates(self, button: Optional[LCDButton] = None) -> None:
+        color = (0, 255, 0) if self.gps_data.in_sync else (255, 0, 0)
         self.lcd_handler.display_text(
-            [f"Lat: {gps_data['latitude']}", f"Lon: {gps_data['longitude']}"],
+            [f"Lat: {self.gps_data.latitude}", f"Lon: {self.gps_data.longitude}"],
             colors=[color, color],
         )
 
@@ -168,15 +200,16 @@ class GPSDisplay:
         else:
             self.lcd_handler.display_text(["No destination set"])
 
-    def display_select_waypoints(
-        self, gps_data, button: Optional[LCDButton] = None
-    ) -> None:
+    def display_select_waypoints(self, button: Optional[LCDButton] = None) -> None:
         if button == LCDButton.SELECT:
-            if gps_data["latitude"] != "NA" and gps_data["longitude"] != "NA":
+            if self.gps_data.in_sync:
+                assert self.gps_data.latitude is not None
+                assert self.gps_data.longitude is not None
+                assert self.gps_data.altitude is not None
                 new_waypoint = Waypoint(
-                    latitude=float(gps_data["latitude"]),
-                    longitude=float(gps_data["longitude"]),
-                    altitude=float(gps_data["altitude"]),
+                    latitude=float(self.gps_data.latitude),
+                    longitude=float(self.gps_data.longitude),
+                    altitude=float(self.gps_data.altitude),
                 )
                 self.saved_data.waypoints.append(new_waypoint)
                 self.save_data()
@@ -214,13 +247,16 @@ class GPSDisplay:
         else:
             self.lcd_handler.display_text(["No waypoints saved"])
 
-    def display_compass_heading_and_speed(self, gps_data, button) -> None:
+    def display_compass_heading_and_speed(self, button) -> None:
         if self.saved_data.destination:
             self.lcd_handler.display_text(
                 [
-                    f"Heading to: {self.saved_data.destination.latitude}, {self.saved_data.destination.longitude}",
-                    f"Speed: {gps_data['speed']}",
-                    f"Compass: {self.compass_heading(gps_data, self.saved_data.destination)}",
+                    f"Current Coords: LAT {self.gps_data.latitude}, Long {self.gps_data.longitude}",
+                    f"Target Coords: LAT {self.saved_data.destination.latitude}, Long {self.saved_data.destination.longitude}",
+                    f"Current Speed : {self.gps_data.speed * gps.MPS_TO_MPH} MPG",
+                    f"Current Heading: {self.gps_data.mag_heading} Degrees (magnetic)",
+                    f"Target Heading : {self.compass_heading(self.saved_data.destination)} Degrees (magnetic)",
+                    f"Distance to Target: {self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Feet",
                 ]
             )
         else:
@@ -229,6 +265,7 @@ class GPSDisplay:
     def main_loop(self) -> None:
         try:
             while True:
+                self.update_gps_data()
                 self.update_display()
                 time.sleep(1)
         except KeyboardInterrupt:

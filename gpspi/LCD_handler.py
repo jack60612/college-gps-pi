@@ -13,11 +13,27 @@ class LCDHandler:
         # Create an image to display
         self.width: int = self.disp.width
         self.height: int = self.disp.height
+        self.__current_brightness: int = 100
         self.image: Image.Image = Image.new("RGB", (self.width, self.height))
         self.draw = ImageDraw.Draw(self.image)
         self.font = ImageFont.load_default()
 
         logging.info("LCD initialized")
+
+    def __set_brightness(self, level: int) -> None:
+        self.disp.bl_DutyCycle(level)
+
+    def lower_brightness(self) -> None:
+        __current_brightness = max(0, self.__current_brightness - 5)
+        self.__set_brightness(__current_brightness)
+
+    def raise_brightness(self) -> None:
+        __current_brightness = min(100, self.__current_brightness + 5)
+        self.__set_brightness(__current_brightness)
+
+    def reset_brightness(self) -> None:
+        __current_brightness = 100
+        self.__set_brightness(__current_brightness)
 
     def display_text(self, lines: list[str], colors=None) -> None:
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
