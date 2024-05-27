@@ -40,7 +40,7 @@ class LCDHandler:
         self.__set_brightness(__current_brightness)
 
     def display_text(
-        self, page_number: Page, lines: list[str], colors=None, buttons: Optional[list[str]] = None
+        self, page_number: Page, lines: list[str], colors: Optional[list[tuple[int,int,int]]] = None, buttons: Optional[list[str]] = None
     ) -> None:
         # Make max line length 20 characters, raise error
         for line in lines:
@@ -48,6 +48,9 @@ class LCDHandler:
                 raise ValueError("Line too long")
         # page number on top,
         lines.insert(0, f"Page {page_number.value}")
+        if colors is not None:
+            colors.insert(0, (255, 255, 255)) # make page number white, stops error
+    
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
         y = 0
         for i, line in enumerate(lines):
@@ -60,7 +63,7 @@ class LCDHandler:
             # draw from other side
             for i, button in enumerate(buttons):
                 self.draw.text(
-                    (self.width - 20, ((self.height * i) / 3) + 5), button, font=self.font, fill=(255, 255, 255)
+                    (self.width - 20, (((self.height-10) * i) / 3) + 10), button, font=self.font, fill=(255, 255, 255)
                 )
 
         self.disp.LCD_ShowImage(self.image, 0, 0)
