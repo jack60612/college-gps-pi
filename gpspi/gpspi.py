@@ -1,0 +1,263 @@
+from typing import Optional, TypedDict
+from gpspi.ButtonHandler import ButtonHandler, LCDButton
+from gpspi.LCDHandler import LCDHandler
+import gps
+import time
+import json
+from enum import Enum
+
+# GPIO Pins
+KEY_UP_PIN = 6
+KEY_DOWN_PIN = 19
+KEY_LEFT_PIN = 5
+KEY_RIGHT_PIN = 26
+KEY_PRESS_PIN = 13
+KEY1_PIN = 21
+KEY2_PIN = 20
+KEY3_PIN = 16
+
+
+class Page(Enum):
+    TIME_AND_SATELLITES = 0
+    GPS_COORDINATES = 1
+    SELECT_DESTINATION = 2
+    SELECT_WAYPOINTS = 3
+    COMPASS_HEADING_AND_SPEED = 4
+
+
+class Waypoint(TypedDict):
+    latitude: float
+    longitude: float
+    altitude: float
+
+
+class savedData(TypedDict):
+    destination: Waypoint
+    waypoints: list[Waypoint]
+
+
+class GPSDisplay:
+    def __init__(self, lcd_handler: LCDHandler, gpio_handler: ButtonHandler):
+        self.lcd_handler: LCDHandler = lcd_handler
+        self.gpio_handler: ButtonHandler = gpio_handler
+
+        # GPS setup
+        self.session = gps.gps("localhost", "2947")
+        self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+
+        # Screen variables
+        self.current_screen: Page = Page.TIME_AND_SATELLITES
+        self.total_screens: int = 4
+        self.saved_data: savedData = self.load_data()
+        self.cur_destination: Waypoint = self.saved_data["destination"]
+        self.cur_waypoints: list[Waypoint] = self.saved_data["waypoints"]
+        self.cur_waypoint_index: int = 0
+
+        # Configure button callbacks
+        self.gpio_handler.configure_callbacks(self.button_callback)
+
+    def load_data(self) -> savedData:
+        try:
+            with open("destination.json", "r") as f:
+                return savedData(**json.load(f))  # type: ignore
+        except FileNotFoundError:
+            return savedData(
+                {
+                    "destination": Waypoint(
+                        {"latitude": 0, "longitude": 0, "altitude": 0}
+                    ),
+                    "waypoints": [],
+                }
+            )
+
+    def save_data(self):
+        with open("destination.json", "w") as f:
+            json.dump(self.saved_data, f)
+
+    def button_callback(self, button: LCDButton):
+        if button == LCDButton.UP:
+            self.current_screen = Page(
+                (self.current_screen.value - 1) % self.total_screens
+            )
+        elif button == LCDButton.DOWN:
+            self.current_screen = Page(
+                (self.current_screen.value + 1) % self.total_screens
+            )
+        else:
+            self.update_display(button)
+
+    def get_gps_data(self):
+        try:
+            report = self.session.next()
+            if report["class"] == "TPV":
+                return {
+                    "latitude": getattr(report, "lat", "NA"),
+                    "longitude": getattr(report, "lon", "NA"),
+                    "altitude": getattr(report, "alt", "NA"),
+                    "speed": getattr(report, "speed", "NA"),
+                    "sats": len(getattr(report, "satellites", [])),
+                    "time": getattr(report, "time", "NA"),
+                }
+        except (KeyError, StopIteration):
+            return None
+
+    def get_nearest_town(self) -> Waypoint:
+        """Return the coordinates of the nearest town."""
+        # TODO: Implement this
+        return Waypoint(latitude=40.7128, longitude=-74.0060, altitude=10)
+
+    def get_nearest_road(self) -> Waypoint:
+        """Return the coordinates of the nearest road."""
+        # TODO: Implement this
+        return Waypoint(latitude=40.7128, longitude=-75.0060, altitude=10)
+
+    def compass_heading(self, gps_data, destination) -> str:
+        """Return the compass heading from the current location to the destination, ex 60 degrees east."""
+        # TODO: Implement this
+        return "Not Implemented"
+
+    def update_display(self, button: Optional[LCDButton] = None):
+        gps_data = self.get_gps_data()
+        if gps_data is None:
+            self.lcd_handler.display_text(["No GPS data"])
+            return
+        if self.current_screen == Page.TIME_AND_SATELLITES:
+            self.display_time_and_satellites(gps_data, button)
+        elif self.current_screen == Page.GPS_COORDINATES:
+            self.display_gps_coordinates(gps_data, button)
+        elif self.current_screen == Page.SELECT_DESTINATION:
+            self.display_select_destination(button)
+        elif self.current_screen == Page.SELECT_WAYPOINTS:
+            self.display_select_waypoints(gps_data, button)
+        elif self.current_screen == Page.COMPASS_HEADING_AND_SPEED:
+            self.display_compass_heading_and_speed(gps_data, button)
+
+    def display_time_and_satellites(self, gps_data, button: Optional[LCDButton] = None):
+        self.lcd_handler.display_text(
+            [
+                time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+                f"Satellites: {gps_data['sats']}",
+                f"Sync: {'Yes' if gps_data['time'] != 'NA' else 'No'}",
+            ]
+        )
+
+    def display_gps_coordinates(self, gps_data, button: Optional[LCDButton] = None):
+        color = (
+            (0, 255, 0)
+            if gps_data["latitude"] != "NA" and gps_data["longitude"] != "NA"
+            else (255, 0, 0)
+        )
+        self.lcd_handler.display_text(
+            [f"Lat: {gps_data['latitude']}", f"Lon: {gps_data['longitude']}"],
+            colors=[color, color],
+        )
+
+    def display_select_destination(self, button: Optional[LCDButton] = None):
+        if button == LCDButton.KEY1:
+            # Set the destination to the nearest town (mock implementation)
+            self.cur_destination = self.get_nearest_town()
+            self.saved_data["destination"] = self.cur_destination
+            self.save_data()
+        elif button == LCDButton.KEY2:
+            # Set the destination to the nearest road (mock implementation)
+            self.cur_destination = self.get_nearest_road()
+            self.saved_data["destination"] = self.cur_destination
+            self.save_data()
+        elif button == LCDButton.KEY3:
+            # Select the destination from a list of waypoints
+            self.cur_destination = self.cur_waypoints[self.cur_waypoint_index]
+            self.saved_data["destination"] = self.cur_destination
+            self.save_data()
+
+        self.lcd_handler.display_text(
+            [
+                f"Destination set to:",
+                f"Lat: {self.cur_destination['latitude']}",
+                f"Lon: {self.cur_destination['longitude']}",
+            ]
+        )
+
+    def display_select_waypoints(self, gps_data, button: Optional[LCDButton] = None):
+        if button == LCDButton.SELECT:
+            if gps_data["latitude"] != "NA" and gps_data["longitude"] != "NA":
+                new_waypoint = Waypoint(
+                    latitude=float(gps_data["latitude"]),
+                    longitude=float(gps_data["longitude"]),
+                    altitude=float(gps_data["altitude"]),
+                )
+                self.cur_waypoints.append(new_waypoint)
+                self.saved_data["waypoints"] = self.cur_waypoints
+                self.save_data()
+                self.lcd_handler.display_text(["Waypoint saved!"])
+        elif button == LCDButton.KEY1:
+            # Delete the current waypoint (confirmation can be added if needed)
+            if self.cur_waypoints:
+                del self.cur_waypoints[self.cur_waypoint_index]
+                self.saved_data["waypoints"] = self.cur_waypoints
+                self.save_data()
+                self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
+                self.lcd_handler.display_text(["Waypoint deleted!"])
+            else:
+                self.lcd_handler.display_text(["No waypoints saved"])
+        elif button == LCDButton.KEY2:
+            # Move to the previous waypoint
+            self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(
+                self.cur_waypoints
+            )
+        elif button == LCDButton.KEY3:
+            # Move to the next waypoint
+            self.cur_waypoint_index = (self.cur_waypoint_index + 1) % len(
+                self.cur_waypoints
+            )
+
+        if self.cur_waypoints:
+            waypoint = self.cur_waypoints[self.cur_waypoint_index]
+            self.lcd_handler.display_text(
+                [
+                    f"Waypoint {self.cur_waypoint_index + 1}/{len(self.cur_waypoints)}",
+                    f"Lat: {waypoint['latitude']}",
+                    f"Lon: {waypoint['longitude']}",
+                    f"Alt: {waypoint['altitude']}",
+                ]
+            )
+        else:
+            self.lcd_handler.display_text(["No waypoints saved"])
+
+    def display_compass_heading_and_speed(self, gps_data, button):
+        self.lcd_handler.display_text(
+            [
+                f"Heading to: {self.destination['latitude']}, {self.destination['longitude']}",
+                f"Speed: {gps_data['speed']}",
+                f"Compass: {self.compass_heading(gps_data, self.destination)}",
+            ]
+        )
+
+    def main_loop(self):
+        try:
+            while True:
+                self.update_display()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass  # gpiozero does not require explicit cleanup
+
+
+def main() -> None:
+    # Create instances of the handlers
+    lcd_handler = LCDHandler()
+    gpio_handler = ButtonHandler(
+        up_pin=KEY_UP_PIN,
+        down_pin=KEY_DOWN_PIN,
+        left_pin=KEY_LEFT_PIN,
+        right_pin=KEY_RIGHT_PIN,
+        select_pin=KEY_PRESS_PIN,
+        key1_pin=KEY1_PIN,
+        key2_pin=KEY2_PIN,
+        key3_pin=KEY3_PIN,
+    )
+    gps_display = GPSDisplay(lcd_handler, gpio_handler)
+    # start program run loop
+    gps_display.main_loop()
+
+
+if __name__ == "__main__":
+    main()
