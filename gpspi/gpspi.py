@@ -258,7 +258,7 @@ class GPSDisplay:
                     f"Cur Speed:{round(self.gps_data.speed * gps.MPS_TO_MPH,2)}MPH",
                     f"CurHead:{round(self.gps_data.mag_heading,2)}Degmag",
                     f"TgtHead:{self.compass_heading(self.saved_data.destination)}Degmag",
-                    f"Dist to Tgt:{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
+                    f"Dist to Tgt{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
                 ],
                 buttons=buttons,
             )
