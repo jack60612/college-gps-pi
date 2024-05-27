@@ -25,7 +25,7 @@
 # THE SOFTWARE.
 #
 
-import config
+import gpspi.lcd.config as config
 import time
 import numpy as np
 
