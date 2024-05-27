@@ -275,7 +275,8 @@ class GPSDisplay:
                     f"LAT: {self.saved_data.destination.latitude}",
                     f"Lng: {self.saved_data.destination.longitude}",
                     "Target Cords^",
-                    f"Dist to Tgt{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
+                    "Dist to Tgt:",
+                    f"{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)} Mi",
                 ],
                 buttons=buttons,
             )
