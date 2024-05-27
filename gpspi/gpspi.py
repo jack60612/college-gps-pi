@@ -179,8 +179,12 @@ class GPSDisplay:
             self.save_data()
         elif button == LCDButton.KEY3:
             # Select the destination from a list of waypoints
-            self.saved_data.destination = self.saved_data.waypoints[self.cur_waypoint_index]
-            self.save_data()
+            if self.saved_data.waypoints:
+                self.saved_data.destination = self.saved_data.waypoints[self.cur_waypoint_index]
+                self.save_data()
+            else:
+                self.lcd_handler.display_text(Page.SELECT_DESTINATION, ["No waypoints saved"], buttons=buttons)
+                return
 
         if self.saved_data.destination:
             self.lcd_handler.display_text(
@@ -196,7 +200,7 @@ class GPSDisplay:
             self.lcd_handler.display_text(Page.SELECT_DESTINATION, ["No destination set"], buttons=buttons)
 
     def display_select_waypoints(self, button: Optional[LCDButton] = None) -> None:
-        buttons = (["DEL", "PREV", "NEXT"],)
+        buttons = ["DEL", "PREV", "NEXT"]
         if button == LCDButton.SELECT:
             if self.gps_data.in_sync:
                 assert self.gps_data.latitude is not None
@@ -210,15 +214,15 @@ class GPSDisplay:
                 self.saved_data.waypoints.append(new_waypoint)
                 self.save_data()
                 self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint saved!"], buttons=buttons)
+        elif len(self.saved_data.waypoints) == 0:  # all other button presses are invalid if there are no waypoints
+            self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"], buttons=buttons)
+            return
         elif button == LCDButton.KEY1:
             # Delete the current waypoint (confirmation can be added if needed)
-            if self.saved_data.waypoints:
-                del self.saved_data.waypoints[self.cur_waypoint_index]
-                self.save_data()
-                self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
-                self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint deleted!"], buttons=buttons)
-            else:
-                self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"], buttons=buttons)
+            del self.saved_data.waypoints[self.cur_waypoint_index]
+            self.save_data()
+            self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
+            self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint deleted!"], buttons=buttons)
         elif button == LCDButton.KEY2:
             # Move to the previous waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(self.saved_data.waypoints)
@@ -226,20 +230,17 @@ class GPSDisplay:
             # Move to the next waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index + 1) % len(self.saved_data.waypoints)
 
-        if self.saved_data.waypoints:
-            waypoint = self.saved_data.waypoints[self.cur_waypoint_index]
-            self.lcd_handler.display_text(
-                Page.SELECT_WAYPOINTS,
-                [
-                    f"Waypoint {self.cur_waypoint_index + 1}/{len(self.saved_data.waypoints)}",
-                    f"Lat: {waypoint.latitude}",
-                    f"Lon: {waypoint.longitude}",
-                    f"Alt: {waypoint.altitude}",
-                ],
-                buttons=buttons,
-            )
-        else:
-            self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"], buttons=buttons)
+        waypoint = self.saved_data.waypoints[self.cur_waypoint_index]
+        self.lcd_handler.display_text(
+            Page.SELECT_WAYPOINTS,
+            [
+                f"Waypoint {self.cur_waypoint_index + 1}/{len(self.saved_data.waypoints)}",
+                f"Lat: {waypoint.latitude}",
+                f"Lon: {waypoint.longitude}",
+                f"Alt: {waypoint.altitude}",
+            ],
+            buttons=buttons,
+        )
 
     def display_compass_heading_and_speed(self, button) -> None:
         buttons = ["N/A", "N/A", "N/A"]
