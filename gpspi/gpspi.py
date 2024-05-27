@@ -38,7 +38,7 @@ class GPSDisplay:
 
         # Screen variables
         self.current_screen: Page = Page.TIME_AND_SATELLITES
-        self.total_screens: int = 5
+        self.total_screens: int = 6
         self.saved_data: SavedData = self.load_data()
         self.cur_waypoint_index: int = 0
 
@@ -136,6 +136,8 @@ class GPSDisplay:
             self.display_select_waypoints(button)
         elif self.current_screen == Page.COMPASS_HEADING_AND_SPEED:
             self.display_compass_heading_and_speed(button)
+        elif self.current_screen == Page.COORDINATES_AND_DISTANCE:
+            self.display_coordinates_and_distance(button)
 
     def display_time_and_satellites(self, button: Optional[LCDButton] = None) -> None:
         assert self.gps_data.time is not None
@@ -243,27 +245,40 @@ class GPSDisplay:
         )
 
     def display_compass_heading_and_speed(self, button) -> None:
-        assert self.gps_data.speed is not None
         assert self.gps_data.mag_heading is not None
         buttons = ["N/A", "N/A", "N/A"]
         if self.saved_data.destination:
             self.lcd_handler.display_text(
                 Page.COMPASS_HEADING_AND_SPEED,
                 [
-                    f"LAT{self.gps_data.latitude}",
-                    f"Lng{self.gps_data.longitude}",
-                    "Cur Crds^, Tgt Crdsv",
-                    f"LAT{self.saved_data.destination.latitude}",
-                    f"Lng{self.saved_data.destination.longitude}",
                     f"Cur Speed:{round(self.gps_data.speed * gps.MPS_TO_MPH,2)}MPH",
                     f"CurHead:{round(self.gps_data.mag_heading,2)}Degmag",
                     f"TgtHead:{self.compass_heading(self.saved_data.destination)}Degmag",
-                    f"Dist to Tgt{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
                 ],
                 buttons=buttons,
             )
         else:
             self.lcd_handler.display_text(Page.COMPASS_HEADING_AND_SPEED, ["No destination set"], buttons=buttons)
+
+    def display_coordinates_and_distance(self, button) -> None:
+        assert self.gps_data.speed is not None
+        buttons = ["N/A", "N/A", "N/A"]
+        if self.saved_data.destination:
+            self.lcd_handler.display_text(
+                Page.COORDINATES_AND_DISTANCE,
+                [
+                    f"LAT: {self.gps_data.latitude}",
+                    f"Lng: {self.gps_data.longitude}",
+                    "Current Cords^",
+                    f"LAT: {self.saved_data.destination.latitude}",
+                    f"Lng: {self.saved_data.destination.longitude}",
+                    "Target Cords^",
+                    f"Dist to Tgt{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
+                ],
+                buttons=buttons,
+            )
+        else:
+            self.lcd_handler.display_text(Page.COORDINATES_AND_DISTANCE, ["No destination set"], buttons=buttons)
 
     def main_loop(self) -> None:
         try:

@@ -7,3 +7,4 @@ class Page(Enum):
     SELECT_DESTINATION: int = 2
     SELECT_WAYPOINTS: int = 3
     COMPASS_HEADING_AND_SPEED: int = 4
+    COORDINATES_AND_DISTANCE: int = 5
