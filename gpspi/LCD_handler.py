@@ -3,8 +3,8 @@ from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
 
-from gpspi.gpspi import Page
 import gpspi.lcd.LCD_1in44 as LCD_1in44
+from gpspi.Page import Page
 
 
 class LCDHandler:

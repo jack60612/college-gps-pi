@@ -1,13 +1,13 @@
 import json
 import logging
 import time
-from enum import Enum
 from typing import Any, Optional
 
 import gps
 
 from gpspi.button_handler import ButtonHandler, LCDButton
 from gpspi.LCD_handler import LCDHandler
+from gpspi.Page import Page
 from gpspi.types.GPS_data import GPSData
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
 
@@ -20,14 +20,6 @@ KEY_PRESS_PIN: int = 13
 KEY1_PIN: int = 21
 KEY2_PIN: int = 20
 KEY3_PIN: int = 16
-
-
-class Page(Enum):
-    TIME_AND_SATELLITES: int = 1
-    GPS_COORDINATES: int = 2
-    SELECT_DESTINATION: int = 3
-    SELECT_WAYPOINTS: int = 4
-    COMPASS_HEADING_AND_SPEED: int = 5
 
 
 class GPSDisplay:
