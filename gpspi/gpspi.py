@@ -23,11 +23,11 @@ KEY3_PIN: int = 16
 
 
 class Page(Enum):
-    TIME_AND_SATELLITES: int = 0
-    GPS_COORDINATES: int = 1
-    SELECT_DESTINATION: int = 2
-    SELECT_WAYPOINTS: int = 3
-    COMPASS_HEADING_AND_SPEED: int = 4
+    TIME_AND_SATELLITES: int = 1
+    GPS_COORDINATES: int = 2
+    SELECT_DESTINATION: int = 3
+    SELECT_WAYPOINTS: int = 4
+    COMPASS_HEADING_AND_SPEED: int = 5
 
 
 class GPSDisplay:
@@ -46,7 +46,7 @@ class GPSDisplay:
 
         # Screen variables
         self.current_screen: Page = Page.TIME_AND_SATELLITES
-        self.total_screens: int = 4
+        self.total_screens: int = 5
         self.saved_data: SavedData = self.load_data()
         self.cur_waypoint_index: int = 0
 
@@ -132,7 +132,7 @@ class GPSDisplay:
 
     def update_display(self, button: Optional[LCDButton] = None) -> None:
         if self.gps_data.time is None:
-            self.lcd_handler.display_text(["No GPS data"])
+            self.lcd_handler.display_text(Page.TIME_AND_SATELLITES, ["No GPS data"])
             return
         if self.current_screen == Page.TIME_AND_SATELLITES:
             self.display_time_and_satellites(button)
@@ -157,16 +157,19 @@ class GPSDisplay:
             # reset brightness
             self.lcd_handler.reset_brightness()
         self.lcd_handler.display_text(
+            Page.TIME_AND_SATELLITES,
             [
                 time.strftime("%Y-%m-%d %H:%M:%S", self.gps_data.time.timetuple()),
                 f"Satellites connected: {self.gps_data.num_satellites}",
                 f"Sync: {'Yes' if self.gps_data.in_sync else 'No'}",
-            ]
+            ],
+            buttons=["B+", "B-", "RB"],
         )
 
     def display_gps_coordinates(self, button: Optional[LCDButton] = None) -> None:
         color = (0, 255, 0) if self.gps_data.in_sync else (255, 0, 0)
         self.lcd_handler.display_text(
+            Page.GPS_COORDINATES,
             [f"Lat: {self.gps_data.latitude}", f"Lon: {self.gps_data.longitude}"],
             colors=[color, color],
         )
@@ -187,14 +190,15 @@ class GPSDisplay:
 
         if self.saved_data.destination:
             self.lcd_handler.display_text(
+                Page.SELECT_DESTINATION,
                 [
                     f"Destination set to:",
                     f"Lat: {self.saved_data.destination.latitude}",
                     f"Lon: {self.saved_data.destination.longitude}",
-                ]
+                ],
             )
         else:
-            self.lcd_handler.display_text(["No destination set"])
+            self.lcd_handler.display_text(Page.SELECT_DESTINATION, ["No destination set"])
 
     def display_select_waypoints(self, button: Optional[LCDButton] = None) -> None:
         if button == LCDButton.SELECT:
@@ -209,16 +213,16 @@ class GPSDisplay:
                 )
                 self.saved_data.waypoints.append(new_waypoint)
                 self.save_data()
-                self.lcd_handler.display_text(["Waypoint saved!"])
+                self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint saved!"])
         elif button == LCDButton.KEY1:
             # Delete the current waypoint (confirmation can be added if needed)
             if self.saved_data.waypoints:
                 del self.saved_data.waypoints[self.cur_waypoint_index]
                 self.save_data()
                 self.cur_waypoint_index = max(0, self.cur_waypoint_index - 1)
-                self.lcd_handler.display_text(["Waypoint deleted!"])
+                self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["Waypoint deleted!"])
             else:
-                self.lcd_handler.display_text(["No waypoints saved"])
+                self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"])
         elif button == LCDButton.KEY2:
             # Move to the previous waypoint
             self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(self.saved_data.waypoints)
@@ -229,19 +233,21 @@ class GPSDisplay:
         if self.saved_data.waypoints:
             waypoint = self.saved_data.waypoints[self.cur_waypoint_index]
             self.lcd_handler.display_text(
+                Page.SELECT_WAYPOINTS,
                 [
                     f"Waypoint {self.cur_waypoint_index + 1}/{len(self.saved_data.waypoints)}",
                     f"Lat: {waypoint.latitude}",
                     f"Lon: {waypoint.longitude}",
                     f"Alt: {waypoint.altitude}",
-                ]
+                ],
             )
         else:
-            self.lcd_handler.display_text(["No waypoints saved"])
+            self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"])
 
     def display_compass_heading_and_speed(self, button) -> None:
         if self.saved_data.destination:
             self.lcd_handler.display_text(
+                Page.COMPASS_HEADING_AND_SPEED,
                 [
                     f"Current Coords: LAT {self.gps_data.latitude}, Long {self.gps_data.longitude}",
                     f"Target Coords: LAT {self.saved_data.destination.latitude}, Long {self.saved_data.destination.longitude}",
@@ -249,10 +255,10 @@ class GPSDisplay:
                     f"Current Heading: {self.gps_data.mag_heading} Degrees (magnetic)",
                     f"Target Heading : {self.compass_heading(self.saved_data.destination)} Degrees (magnetic)",
                     f"Distance to Target: {self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Feet",
-                ]
+                ],
             )
         else:
-            self.lcd_handler.display_text(["No destination set"])
+            self.lcd_handler.display_text(Page.COMPASS_HEADING_AND_SPEED, ["No destination set"])
 
     def main_loop(self) -> None:
         try:
