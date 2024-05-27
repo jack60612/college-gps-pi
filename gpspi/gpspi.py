@@ -252,8 +252,10 @@ class GPSDisplay:
                 Page.COMPASS_HEADING_AND_SPEED,
                 [
                     f"Cur Speed:{round(self.gps_data.speed * gps.MPS_TO_MPH,2)}MPH",
-                    f"CurHead:{round(self.gps_data.mag_heading,2)}Degmag",
-                    f"TgtHead:{self.compass_heading(self.saved_data.destination)}Degmag",
+                    f"CurH:{round(self.gps_data.mag_heading,2)}",
+                    f"TgtH:{self.compass_heading(self.saved_data.destination)}",
+                    "Headings are in",
+                    "Magnetic Degrees",
                 ],
                 buttons=buttons,
             )
