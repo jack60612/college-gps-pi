@@ -25,9 +25,11 @@
 # THE SOFTWARE.
 #
 
-import gpspi.lcd.config as config
 import time
+
 import numpy as np
+
+import gpspi.lcd.config as config
 
 LCD_1IN44 = 1
 LCD_1IN8 = 0
@@ -199,12 +201,7 @@ class LCD(config.RaspberryPi):
         self.LCD_Scan_Dir = Scan_dir
 
         # Get GRAM and LCD width and height
-        if (
-            (Scan_dir == L2R_U2D)
-            or (Scan_dir == L2R_D2U)
-            or (Scan_dir == R2L_U2D)
-            or (Scan_dir == R2L_D2U)
-        ):
+        if (Scan_dir == L2R_U2D) or (Scan_dir == L2R_D2U) or (Scan_dir == R2L_U2D) or (Scan_dir == R2L_D2U):
             self.width = LCD_HEIGHT
             self.height = LCD_WIDTH
             if Scan_dir == L2R_U2D:
@@ -240,9 +237,7 @@ class LCD(config.RaspberryPi):
         if LCD_1IN44 == 1:
             self.LCD_WriteData_8bit(MemoryAccessReg_Data | 0x08)  # 0x08 set RGB
         else:
-            self.LCD_WriteData_8bit(
-                MemoryAccessReg_Data & 0xF7
-            )  # RGB color filter panel
+            self.LCD_WriteData_8bit(MemoryAccessReg_Data & 0xF7)  # RGB color filter panel
 
     # /********************************************************************************
     # function:
@@ -318,9 +313,7 @@ class LCD(config.RaspberryPi):
             )
         img = np.asarray(Image)
         pix = np.zeros((self.width, self.height, 2), dtype=np.uint8)
-        pix[..., [0]] = np.add(
-            np.bitwise_and(img[..., [0]], 0xF8), np.right_shift(img[..., [1]], 5)
-        )
+        pix[..., [0]] = np.add(np.bitwise_and(img[..., [0]], 0xF8), np.right_shift(img[..., [1]], 5))
         pix[..., [1]] = np.add(
             np.bitwise_and(np.left_shift(img[..., [1]], 3), 0xE0),
             np.right_shift(img[..., [2]], 3),

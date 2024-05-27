@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
 import datetime
-from typing import Any, Optional
+from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
@@ -13,9 +13,7 @@ class GPSData:
     speed: Optional[float] = field(default=None)  # m/s
     satellites: list[dict[str, object]] = field(default=list())  # Number of satellites
     time: Optional[datetime.datetime] = field(default=None)  # UTC time
-    true_heading: Optional[float] = field(
-        default=None
-    )  # heading in degrees (true north)
+    true_heading: Optional[float] = field(default=None)  # heading in degrees (true north)
     mag_heading: Optional[float] = field(default=None)  # heading in degrees (magnetic)
 
     @property
@@ -23,9 +21,7 @@ class GPSData:
         "If the gps data is less then 5 seconds old, return True, else False"
         if self.time is None:
             return False
-        return (
-            (self.time - datetime.datetime.now(datetime.UTC)).total_seconds() < 5
-        ) and self.latitude is not None
+        return ((self.time - datetime.datetime.now(datetime.UTC)).total_seconds() < 5) and self.latitude is not None
 
     @property
     def num_satellites(self) -> int:
@@ -49,8 +45,6 @@ class GPSData:
         self.true_heading = true_heading if true_heading else self.true_heading
         self.mag_heading = mag_heading if mag_heading else self.mag_heading
 
-    def update_satellite_data(
-        self, time: Optional[str], satellites: list[dict[str, object]]
-    ) -> None:
+    def update_satellite_data(self, time: Optional[str], satellites: list[dict[str, object]]) -> None:
         self.time = datetime.datetime.fromisoformat(time) if time else self.time
         self.satellites = satellites if satellites else self.satellites

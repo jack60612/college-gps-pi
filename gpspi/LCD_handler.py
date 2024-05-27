@@ -1,6 +1,8 @@
 import logging
-import gpspi.lcd.LCD_1in44 as LCD_1in44
+
 from PIL import Image, ImageDraw, ImageFont
+
+import gpspi.lcd.LCD_1in44 as LCD_1in44
 
 
 class LCDHandler:

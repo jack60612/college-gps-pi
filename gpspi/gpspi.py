@@ -1,13 +1,15 @@
+import json
 import logging
+import time
+from enum import Enum
 from typing import Any, Optional
+
+import gps
+
 from gpspi.button_handler import ButtonHandler, LCDButton
+from gpspi.LCD_handler import LCDHandler
 from gpspi.types.GPS_data import GPSData
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
-from gpspi.LCD_handler import LCDHandler
-import gps
-import time
-import json
-from enum import Enum
 
 # GPIO Pins
 KEY_UP_PIN: int = 6
@@ -67,13 +69,9 @@ class GPSDisplay:
 
     def button_callback(self, button: LCDButton) -> None:
         if button == LCDButton.UP:
-            self.current_screen = Page(
-                (self.current_screen.value - 1) % self.total_screens
-            )
+            self.current_screen = Page((self.current_screen.value - 1) % self.total_screens)
         elif button == LCDButton.DOWN:
-            self.current_screen = Page(
-                (self.current_screen.value + 1) % self.total_screens
-            )
+            self.current_screen = Page((self.current_screen.value + 1) % self.total_screens)
         else:
             self.update_display(button)
 
@@ -184,9 +182,7 @@ class GPSDisplay:
             self.save_data()
         elif button == LCDButton.KEY3:
             # Select the destination from a list of waypoints
-            self.saved_data.destination = self.saved_data.waypoints[
-                self.cur_waypoint_index
-            ]
+            self.saved_data.destination = self.saved_data.waypoints[self.cur_waypoint_index]
             self.save_data()
 
         if self.saved_data.destination:
@@ -225,14 +221,10 @@ class GPSDisplay:
                 self.lcd_handler.display_text(["No waypoints saved"])
         elif button == LCDButton.KEY2:
             # Move to the previous waypoint
-            self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(
-                self.saved_data.waypoints
-            )
+            self.cur_waypoint_index = (self.cur_waypoint_index - 1) % len(self.saved_data.waypoints)
         elif button == LCDButton.KEY3:
             # Move to the next waypoint
-            self.cur_waypoint_index = (self.cur_waypoint_index + 1) % len(
-                self.saved_data.waypoints
-            )
+            self.cur_waypoint_index = (self.cur_waypoint_index + 1) % len(self.saved_data.waypoints)
 
         if self.saved_data.waypoints:
             waypoint = self.saved_data.waypoints[self.cur_waypoint_index]

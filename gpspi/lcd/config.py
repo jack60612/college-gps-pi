@@ -24,10 +24,11 @@
 # THE SOFTWARE.
 #
 
-import spidev
-import time
 import logging
+import time
+
 import numpy as np
+import spidev
 from gpiozero import *
 
 # GPIO define
