@@ -113,12 +113,12 @@ class GPSDisplay:
     def compass_heading(self, destination) -> str:
         """Return the compass heading from the current location to the destination, ex 60 degrees east."""
         # TODO: Implement this
-        return "Not Implemented"
+        return "NoImp"
 
     def calculate_distance(self, destination) -> float:
         """Return the distance from the current location to the destination in meters."""
         # TODO: Implement this
-        return 0
+        return 8008
 
     # GUI Functions
 
@@ -243,18 +243,22 @@ class GPSDisplay:
         )
 
     def display_compass_heading_and_speed(self, button) -> None:
+        assert self.gps_data.speed is not None
+        assert self.gps_data.mag_heading is not None
         buttons = ["N/A", "N/A", "N/A"]
         if self.saved_data.destination:
             self.lcd_handler.display_text(
                 Page.COMPASS_HEADING_AND_SPEED,
                 [
-                    f"LAT{self.gps_data.latitude}Lng{self.gps_data.longitude}",
+                    f"LAT{self.gps_data.latitude}",
+                    f"Lng{self.gps_data.longitude}",
                     "Cur Crds^, Tgt Crdsv",
-                    f"LAT{self.saved_data.destination.latitude}Lng{self.saved_data.destination.longitude}",
-                    f"Cur Speed:{self.gps_data.speed * gps.MPS_TO_MPH} MPH",
-                    f"Cur Heading:{self.gps_data.mag_heading} Deg(mag)",
+                    f"LAT{self.saved_data.destination.latitude}",
+                    f"Lng{self.saved_data.destination.longitude}",
+                    f"Cur Speed:{round(self.gps_data.speed * gps.MPS_TO_MPH,2)}MPH",
+                    f"Cur Heading:{round(self.gps_data.mag_heading,2)} Deg(mag)",
                     f"Tgt Heading:{self.compass_heading(self.saved_data.destination)} Deg(mag)",
-                    f"Dist to Tgt:{self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Ft",
+                    f"Dist to Tgt:{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)}Mi",
                 ],
                 buttons=buttons,
             )
