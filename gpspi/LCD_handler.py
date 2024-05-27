@@ -63,7 +63,7 @@ class LCDHandler:
             # draw from other side
             for i, button in enumerate(buttons):
                 self.draw.text(
-                    (self.width - 20, (((self.height-10) * i) / 3) + 10), button, font=self.font, fill=(255, 255, 255)
+                    (self.width - 20, (((self.height-25) * i) / 3) + 25), button, font=self.font, fill=(255, 255, 255)
                 )
 
         self.disp.LCD_ShowImage(self.image, 0, 0)
