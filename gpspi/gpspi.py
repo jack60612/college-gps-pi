@@ -164,6 +164,7 @@ class GPSDisplay:
             Page.GPS_COORDINATES,
             [f"Lat: {self.gps_data.latitude}", f"Lon: {self.gps_data.longitude}"],
             colors=[color, color],
+            buttons=["N/A", "N/A", "N/A"],
         )
 
     def display_select_destination(self, button: Optional[LCDButton] = None) -> None:
@@ -188,6 +189,7 @@ class GPSDisplay:
                     f"Lat: {self.saved_data.destination.latitude}",
                     f"Lon: {self.saved_data.destination.longitude}",
                 ],
+                buttons=["NT", "NR", "WP"],
             )
         else:
             self.lcd_handler.display_text(Page.SELECT_DESTINATION, ["No destination set"])
@@ -232,6 +234,7 @@ class GPSDisplay:
                     f"Lon: {waypoint.longitude}",
                     f"Alt: {waypoint.altitude}",
                 ],
+                buttons=["DEL", "PREV", "NEXT"],
             )
         else:
             self.lcd_handler.display_text(Page.SELECT_WAYPOINTS, ["No waypoints saved"])
@@ -248,6 +251,7 @@ class GPSDisplay:
                     f"Tgt Heading: {self.compass_heading(self.saved_data.destination)} Deg (mag)",
                     f"Dist to Tgt: {self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Ft",
                 ],
+                buttons=["N/A", "N/A", "N/A"],
             )
         else:
             self.lcd_handler.display_text(Page.COMPASS_HEADING_AND_SPEED, ["No destination set"])
