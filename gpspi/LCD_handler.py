@@ -42,14 +42,16 @@ class LCDHandler:
     def display_text(
         self, page_number: Page, lines: list[str], colors=None, buttons: Optional[list[str]] = None
     ) -> None:
-        # Make max line length 20 characters
-        lines = [line[:20] for line in lines]
+        # Make max line length 20 characters, raise error
+        for line in lines:
+            if len(line) > 20:
+                raise ValueError("Line too long")
         # page number on top,
         lines.insert(0, f"Page {page_number.value}")
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
         y = 0
         for i, line in enumerate(lines):
-            color = (255, 255, 255) if not colors else colors[i]
+            color = (255, 255, 255) if not colors else colors[i + 1]
             self.draw.text((0, y), line, font=self.font, fill=color)
             y += 10
 
@@ -57,6 +59,8 @@ class LCDHandler:
         if buttons is not None:
             # draw from other side
             for i, button in enumerate(buttons):
-                self.draw.text((self.width - 20, i * 10), button, font=self.font, fill=(255, 255, 255))
+                self.draw.text(
+                    (self.width - 20, ((self.height * i) / 3) - 5), button, font=self.font, fill=(255, 255, 255)
+                )
 
         self.disp.LCD_ShowImage(self.image, 0, 0)

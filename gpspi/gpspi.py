@@ -152,8 +152,8 @@ class GPSDisplay:
             Page.TIME_AND_SATELLITES,
             [
                 time.strftime("%Y-%m-%d %H:%M:%S", self.gps_data.time.timetuple()),
-                f"Satellites connected: {self.gps_data.num_satellites}",
-                f"Sync: {'Yes' if self.gps_data.in_sync else 'No'}",
+                f"Sats connected: {self.gps_data.num_satellites}",
+                f"Synced: {'Yes' if self.gps_data.in_sync else 'No'}",
             ],
             buttons=["B+", "B-", "RB"],
         )
@@ -241,12 +241,12 @@ class GPSDisplay:
             self.lcd_handler.display_text(
                 Page.COMPASS_HEADING_AND_SPEED,
                 [
-                    f"Current Coords: LAT {self.gps_data.latitude}, Long {self.gps_data.longitude}",
-                    f"Target Coords: LAT {self.saved_data.destination.latitude}, Long {self.saved_data.destination.longitude}",
-                    f"Current Speed : {self.gps_data.speed * gps.MPS_TO_MPH} MPG",
-                    f"Current Heading: {self.gps_data.mag_heading} Degrees (magnetic)",
-                    f"Target Heading : {self.compass_heading(self.saved_data.destination)} Degrees (magnetic)",
-                    f"Distance to Target: {self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Feet",
+                    f"Cur Crds: LAT {self.gps_data.latitude}, Lng {self.gps_data.longitude}",
+                    f"Tgt Crds: LAT {self.saved_data.destination.latitude}, Lng {self.saved_data.destination.longitude}",
+                    f"Cur Speed: {self.gps_data.speed * gps.MPS_TO_MPH} MPG",
+                    f"Cur Heading: {self.gps_data.mag_heading} Deg (mag)",
+                    f"Tgt Heading: {self.compass_heading(self.saved_data.destination)} Deg (mag)",
+                    f"Dist to Tgt: {self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_FEET} Ft",
                 ],
             )
         else:
