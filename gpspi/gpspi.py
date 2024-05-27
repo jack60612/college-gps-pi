@@ -252,6 +252,7 @@ class GPSDisplay:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     # Create instances of the handlers
     lcd_handler = LCDHandler()
     gpio_handler = ButtonHandler(
@@ -266,6 +267,7 @@ def main() -> None:
     )
     gps_display = GPSDisplay(lcd_handler, gpio_handler)
     # start program run loop
+    logging.info("Starting Main loop")
     gps_display.main_loop()
 
 
