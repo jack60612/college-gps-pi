@@ -11,7 +11,7 @@ class GPSData:
     longitude: Optional[float] = field(default=None)  # the longitude in degrees
     altitude: Optional[float] = field(default=None)  # altitude in meters
     speed: Optional[float] = field(default=None)  # m/s
-    satellites: list[dict[str, object]] = field(default=list)  # Number of satellites
+    satellites: list[dict[str, object]] = field(default_factory=list)  # Number of satellites
     time: Optional[datetime.datetime] = field(default=None)  # UTC time
     true_heading: Optional[float] = field(default=None)  # heading in degrees (true north)
     mag_heading: Optional[float] = field(default=None)  # heading in degrees (magnetic)
@@ -25,7 +25,7 @@ class GPSData:
 
     @property
     def num_satellites(self) -> int:
-        return len(self.satellites) if self.satellites is not None else 0
+        return len(self.satellites)
 
     def update_position_data(
         self,

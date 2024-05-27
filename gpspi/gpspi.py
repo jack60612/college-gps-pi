@@ -102,7 +102,7 @@ class GPSDisplay:
 
             if report["class"] == "SKY":  # Satellite information
                 time = report.get("time")
-                satellites: list[dict[str, Any]] = report.get("satellites", [{}])
+                satellites: list[dict[str, Any]] = list(report.get("satellites", [{}]))
                 self.gps_data.update_satellite_data(time=time, satellites=satellites)
 
         except (TypeError, KeyError, StopIteration):
