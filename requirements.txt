@@ -6,3 +6,6 @@ pigpio>=1.78
 pillow>=10.3.0
 setuptools
 wheel
+black
+isort
+mypy
