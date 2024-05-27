@@ -44,7 +44,7 @@ class GPSDisplay:
 
         # GPS setup
         logging.info("Connecting to GPSD")
-        self.session = gps.gps("localhost", "2947")
+        self.session = gps.gps(host="127.0.0.1", port="2947", reconnect=True)
         self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
         logging.info("Connected to GPSD")
 
