@@ -7,6 +7,7 @@ import gps
 
 from gpspi.button_handler import ButtonHandler, LCDButton
 from gpspi.LCD_handler import LCDHandler
+from gpspi.mapping.coord_utils import get_nearest_city
 from gpspi.types.GPS_data import GPSData
 from gpspi.types.page import Page
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
@@ -100,13 +101,13 @@ class GPSDisplay:
         except (TypeError, KeyError, StopIteration):
             return None
 
-    def get_nearest_town(self) -> Waypoint:
+    def get_nearest_city(self) -> Waypoint:
         """Return the coordinates of the nearest town."""
-        # TODO: Implement this
-        return Waypoint(latitude=40.7128, longitude=-74.0060, altitude=10)
+        # Now Implemented YAY
+        return get_nearest_city(self.gps_data.as_waypoint()).as_waypoint()
 
-    def get_nearest_road(self) -> Waypoint:
-        """Return the coordinates of the nearest road."""
+    def navigate_to_city(self) -> Waypoint:
+        """start navigation to the nearest city"""
         # TODO: Implement this
         return Waypoint(latitude=40.7128, longitude=-75.0060, altitude=10)
 
@@ -172,12 +173,12 @@ class GPSDisplay:
     def display_select_destination(self, button: Optional[LCDButton] = None) -> None:
         buttons = ["NT", "NR", "WP"]
         if button == LCDButton.KEY1:
-            # Set the destination to the nearest town (mock implementation)
-            self.saved_data.destination = self.get_nearest_town()
+            # Set the destination to the nearest city
+            self.saved_data.destination = self.get_nearest_city()
             self.save_data()
         elif button == LCDButton.KEY2:
-            # Set the destination to the nearest road (mock implementation)
-            self.saved_data.destination = self.get_nearest_road()
+            # navigate to the nearest city
+            self.saved_data.destination = self.navigate_to_city()
             self.save_data()
         elif button == LCDButton.KEY3:
             # Select the destination from a list of waypoints

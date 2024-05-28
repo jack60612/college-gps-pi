@@ -4,6 +4,11 @@ gps>=3.19
 numpy>=1.26.4
 pigpio>=1.78
 pillow>=10.3.0
+networkx>=3.3
+osmnx>=1.9.3
+osmium>=3.7.0
+reverse_geocoder>=1.5.1
+spidev
 setuptools
 wheel
 black

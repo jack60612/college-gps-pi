@@ -18,6 +18,7 @@ class Waypoint:
     latitude: float
     longitude: float
     altitude: float
+    name: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: DictWaypoint) -> "Waypoint":

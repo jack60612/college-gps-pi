@@ -27,7 +27,11 @@
     ```bash
     sudo apt install -y python3-pip python3-pil python3-numpy python3-smbus python3-serial python3-dev python3-spidev
     ```
+5. Install required software packages for this app
 
+    ```bash
+    sudo apt install -y libosmium2-dev osmium-tool pyosmium python3-networkx python3-geopy python3-osmnx && pip install python3-pyrosm
+    ```
 5. Turn off the pi
 
     ```bash
