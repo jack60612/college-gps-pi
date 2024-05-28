@@ -27,11 +27,13 @@
     ```bash
     sudo apt install -y python3-pip python3-pil python3-numpy python3-smbus python3-serial python3-dev python3-spidev
     ```
+
 5. Install required software packages for this app
 
     ```bash
-    sudo apt install -y libosmium2-dev osmium-tool pyosmium python3-networkx python3-geopy python3-osmnx && pip install python3-pyrosm
+    sudo apt install -y libosmium2-dev osmium-tool pyosmium
     ```
+
 5. Turn off the pi
 
     ```bash
@@ -49,11 +51,13 @@
     sudo systemctl enable gpsd && sudo systemctl start gpsd
     sudo systemctl enable chrony && sudo systemctl start chrony
     ```
+
 9. test gpsd
 
     ```bash
     cgps -s
     ```
+
 10. test pps
 
     ```bash
@@ -62,10 +66,18 @@
 
 11. Clone repo :)
 
-12. run the app
+12. create venv and install requirements
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+13. run the app
 
     ```bash
     python3 -m gpspi
     ```
 
-13. cry because it doesn't work
+14. cry because it doesn't work
