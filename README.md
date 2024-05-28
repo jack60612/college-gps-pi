@@ -31,7 +31,7 @@
 5. Install required software packages for this app
 
     ```bash
-    sudo apt install -y libosmium2-dev osmium-tool pyosmium
+    sudo apt install -y libosmium2-dev osmium-tool pyosmium libgdal-dev cmake
     ```
 
 5. Turn off the pi
