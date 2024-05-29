@@ -10,14 +10,19 @@ from pyrosm import OSM
 def get_graph(file_name: str) -> MultiDiGraph:
     osm = OSM(file_name)
     print("Getting driving network")
-    driving_net = osm.get_network(network_type="driving")
-    return driving_net
+    nodes, edges = osm.get_network(network_type="driving")
+    print("Converting to graphml")
+    graph = osm.to_graph(nodes, edges, network_type="networkx")
+    
+    return graph
 
 
 def main() -> None:
     # we only need the path finding
     main_graph = get_graph(source_path)
-    print("Graph loaded\nSaving Graph...")
+    print("graph loaded, simplifying...")
+    ox.simplify_graph(main_graph)
+    print("graph simplified, saving graph to disk")
     ox.save_graphml(main_graph, "north-america-all-roads.graphml")
     print("Graph saved, exiting...")
 
