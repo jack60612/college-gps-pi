@@ -7,7 +7,12 @@ import gps
 
 from gpspi.button_handler import ButtonHandler, LCDButton
 from gpspi.LCD_handler import LCDHandler
-from gpspi.mapping.coord_utils import get_nearest_city
+from gpspi.mapping.coord_utils import (
+    get_distance_feet,
+    get_magnetic_bearing,
+    get_nearest_city,
+)
+from gpspi.mapping.path_finder import GPSPathFinder
 from gpspi.types.GPS_data import GPSData
 from gpspi.types.page import Page
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
@@ -27,6 +32,7 @@ class GPSDisplay:
     def __init__(self, lcd_handler: LCDHandler, gpio_handler: ButtonHandler) -> None:
         self.lcd_handler: LCDHandler = lcd_handler
         self.gpio_handler: ButtonHandler = gpio_handler
+        self.gps_path_finder = GPSPathFinder("north-america-all-roads.graphml")
 
         # GPS setup
         logging.info("Connecting to GPSD")
@@ -106,20 +112,31 @@ class GPSDisplay:
         # Now Implemented YAY
         return get_nearest_city(self.gps_data.as_waypoint()).as_waypoint()
 
-    def navigate_to_city(self) -> Waypoint:
+    def navigate_to_city(self) -> list[Waypoint]:
         """start navigation to the nearest city"""
-        # TODO: Implement this
-        return Waypoint(latitude=40.7128, longitude=-75.0060, altitude=10)
+        # Now Implemented YAY
+        if not self.gps_data.in_sync:
+            return []
+        nearest_city: Waypoint = get_nearest_city(self.gps_data.as_waypoint()).as_waypoint()
+        # generate route to the nearest city
+        return self.gps_path_finder.navigate_to_waypoint(self.gps_data, nearest_city)
 
-    def compass_heading(self, destination) -> str:
+    def get_nearest_road(self) -> Waypoint:
+        """Navigate to the nearest road"""
+        # Now Implemented YAY
+        if not self.gps_data.in_sync:
+            return Waypoint(0.0, 0.0, 0.0)
+        return self.gps_path_finder.navigate_to_nearest_road(self.gps_data)
+
+    def compass_heading(self, destination) -> float:
         """Return the compass heading from the current location to the destination, ex 60 degrees east."""
-        # TODO: Implement this
-        return "NoImp"
+        # Implemented this
+        return get_magnetic_bearing(self.gps_data.as_waypoint(), destination)
 
     def calculate_distance(self, destination) -> float:
-        """Return the distance from the current location to the destination in meters."""
-        # TODO: Implement this
-        return 8008
+        """Return the distance from the current location to the destination in feet."""
+        # Implemented this
+        return get_distance_feet(self.gps_data.as_waypoint(), destination)
 
     # GUI Functions
 
@@ -171,14 +188,16 @@ class GPSDisplay:
         )
 
     def display_select_destination(self, button: Optional[LCDButton] = None) -> None:
-        buttons = ["NT", "NR", "WP"]
+        buttons = ["NR", "NC", "WP"]
         if button == LCDButton.KEY1:
-            # Set the destination to the nearest city
-            self.saved_data.destination = self.get_nearest_city()
+            # Set the destination to the nearest road
+            self.saved_data.destination = self.get_nearest_road()
             self.save_data()
         elif button == LCDButton.KEY2:
             # navigate to the nearest city
-            self.saved_data.destination = self.navigate_to_city()
+            nav_output = self.navigate_to_city()
+            self.saved_data.destination = nav_output[0]
+            self.saved_data.waypoints += nav_output[1:]
             self.save_data()
         elif button == LCDButton.KEY3:
             # Select the destination from a list of waypoints
@@ -196,6 +215,7 @@ class GPSDisplay:
                     f"Destination set to:",
                     f"Lat: {self.saved_data.destination.latitude}",
                     f"Lon: {self.saved_data.destination.longitude}",
+                    f"Name: {self.saved_data.destination.name}",
                 ],
                 buttons=buttons,
             )
@@ -242,6 +262,7 @@ class GPSDisplay:
                 f"Lat: {waypoint.latitude}",
                 f"Lon: {waypoint.longitude}",
                 f"Alt: {waypoint.altitude}",
+                f"Name: {waypoint.name}",
             ],
             buttons=buttons,
         )
@@ -278,7 +299,7 @@ class GPSDisplay:
                     f"Lng: {self.saved_data.destination.longitude}",
                     "Target Cords^",
                     "Dist to Tgt:",
-                    f"{round(self.calculate_distance(self.saved_data.destination) * gps.METERS_TO_MILES,2)} Mi",
+                    f"{round(self.calculate_distance(self.saved_data.destination) / 5280,2)} Mi",
                 ],
                 buttons=buttons,
             )
