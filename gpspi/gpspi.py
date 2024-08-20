@@ -12,7 +12,7 @@ from gpspi.mapping.coord_utils import (
     get_magnetic_bearing,
     get_nearest_city,
 )
-from gpspi.mapping.path_finder import GPSPathFinder
+#from gpspi.mapping.WIP.path_finder import GPSPathFinder
 from gpspi.types.GPS_data import GPSData
 from gpspi.types.page import Page
 from gpspi.types.saved_data import DictSavedData, SavedData, Waypoint
@@ -32,7 +32,7 @@ class GPSDisplay:
     def __init__(self, lcd_handler: LCDHandler, gpio_handler: ButtonHandler) -> None:
         self.lcd_handler: LCDHandler = lcd_handler
         self.gpio_handler: ButtonHandler = gpio_handler
-        self.gps_path_finder = GPSPathFinder("north-america-all-roads.graphml")
+        #self.gps_path_finder = GPSPathFinder("north-america-all-roads.graphml")
 
         # GPS setup
         logging.info("Connecting to GPSD")
@@ -118,15 +118,18 @@ class GPSDisplay:
         if not self.gps_data.in_sync:
             return []
         nearest_city: Waypoint = get_nearest_city(self.gps_data.as_waypoint()).as_waypoint()
-        # generate route to the nearest city
-        return self.gps_path_finder.navigate_to_waypoint(self.gps_data, nearest_city)
+        # generate route to the nearest city, this is disabled to save processing power.
+        #return self.gps_path_finder.navigate_to_waypoint(self.gps_data, nearest_city)
+        return [nearest_city]
 
     def get_nearest_road(self) -> Waypoint:
         """Navigate to the nearest road"""
         # Now Implemented YAY
         if not self.gps_data.in_sync:
             return Waypoint(0.0, 0.0, 0.0)
-        return self.gps_path_finder.navigate_to_nearest_road(self.gps_data)
+        #return self.gps_path_finder.navigate_to_nearest_road(self.gps_data)
+        #this code should not be called
+        return self.get_nearest_city()
 
     def compass_heading(self, destination) -> float:
         """Return the compass heading from the current location to the destination, ex 60 degrees east."""
@@ -191,7 +194,7 @@ class GPSDisplay:
         buttons = ["NR", "NC", "WP"]
         if button == LCDButton.KEY1:
             # Set the destination to the nearest road
-            self.saved_data.destination = self.get_nearest_road()
+            #self.saved_data.destination = self.get_nearest_road()
             self.save_data()
         elif button == LCDButton.KEY2:
             # navigate to the nearest city
