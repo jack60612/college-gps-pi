@@ -1,11 +1,13 @@
 from typing import Union
 
 import reverse_geocoder as rg
-from osmnx import bearing, distance
+import pyproj
 
 from gpspi.types.GPS_data import CityData
 from gpspi.types.saved_data import Waypoint
 
+
+GEODESIC_MODEL = pyproj.Geod(ellps="WGS84")
 
 def get_magnetic_bearing(current_pos: Waypoint, target_pos: Waypoint) -> float:
     """
@@ -21,9 +23,9 @@ def get_magnetic_bearing(current_pos: Waypoint, target_pos: Waypoint) -> float:
     lat2 = target_pos.latitude
     lon2 = target_pos.longitude
     # return the bearing
-    true_bearing = bearing.calculate_bearing(lat1, lon1, lat2, lon2)
+    fwd_bearing, _, _ = GEODESIC_MODEL.inv(lon1, lat1, lon2, lat2)
     offset = 0  # TODO: get the magnetic offset
-    magnetic_bearing = true_bearing + offset
+    magnetic_bearing = fwd_bearing + offset
     return magnetic_bearing
 
 
@@ -41,7 +43,7 @@ def get_distance_meters(current_pos: Waypoint, target_pos: Waypoint) -> float:
     lat2 = target_pos.latitude
     lon2 = target_pos.longitude
     # use the haversine formula to calculate the distance
-    dist_meters = distance.great_circle(lat1, lon1, lat2, lon2)
+    _, _, dist_meters = GEODESIC_MODEL.inv(lon1, lat1, lon2, lat2)
     return dist_meters
 
 
