@@ -319,7 +319,7 @@ class GPSDisplay:
         cur_dt: datetime.datetime = self.gps_data.time
         assert cur_dt is not None
         # MIT decision is around 12/14/2024, 12:14 pm EST
-        date_diff: datetime.timedelta = self.gps_data.time - MIT_DECISION_DATE
+        date_diff: datetime.timedelta = MIT_DECISION_DATE - self.gps_data.time
         # this is the amount of time until the decision
         self.lcd_handler.display_text(
             Page.MIT_PAGE,
