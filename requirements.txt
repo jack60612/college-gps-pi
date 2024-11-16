@@ -2,7 +2,7 @@ setuptools
 wheel
 colorzero>=2.0
 gpiozero>=2.0.1
-spidev
+#spidev
 gps>=3.19
 numpy>=1.26.4
 pigpio>=1.78

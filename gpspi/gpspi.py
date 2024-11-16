@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import time
@@ -159,6 +160,8 @@ class GPSDisplay:
             self.display_compass_heading_and_speed(button)
         elif self.current_screen == Page.COORDINATES_AND_DISTANCE:
             self.display_coordinates_and_distance(button)
+        elif self.current_screen == Page.MIT_PAGE:
+            self.display_mit_page(button)
 
     def display_time_and_satellites(self, button: Optional[LCDButton] = None) -> None:
         assert self.gps_data.time is not None
@@ -308,6 +311,24 @@ class GPSDisplay:
             )
         else:
             self.lcd_handler.display_text(Page.COORDINATES_AND_DISTANCE, ["No destination set"], buttons=buttons)
+            
+    def display_mit_page(self, button: Optional[LCDButton] = None) -> None:
+        # MIT decision is around 12/14/2024, 12:14 pm EST
+        date_diff: datetime.timedelta = self.gps_data.time - time.strptime("2024-12-14 12:14:00", "%Y-%m-%d %H:%M:%S")
+        # this is the amount of time until the decision
+        self.lcd_handler.display_text(
+            Page.MIT_PAGE,
+            [
+                "MIT Decision Countdown",
+                f"{date_diff.days} days, ",
+                f"{date_diff.seconds // 3600} hours, ",
+                f"{(date_diff.seconds // 60) % 60} minutes, ",
+                f"{date_diff.seconds % 60} seconds",
+                f"{date_diff.microseconds} microseconds",
+            ],
+            buttons=["N/A", "N/A", "N/A"],
+        )
+        
 
     def main_loop(self) -> None:
         try:
