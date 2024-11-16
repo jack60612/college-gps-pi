@@ -28,6 +28,9 @@ KEY1_PIN: int = 21
 KEY2_PIN: int = 20
 KEY3_PIN: int = 16
 
+#other
+MIT_DECISION_DATE = datetime.datetime.strptime("2024-12-14 12:14:00 -0500", "%Y-%m-%d %H:%M:%S %z")
+
 
 class GPSDisplay:
     def __init__(self, lcd_handler: LCDHandler, gpio_handler: ButtonHandler) -> None:
@@ -316,7 +319,7 @@ class GPSDisplay:
         cur_dt: datetime.datetime = self.gps_data.time
         assert cur_dt is not None
         # MIT decision is around 12/14/2024, 12:14 pm EST
-        date_diff: datetime.timedelta = self.gps_data.time - datetime.datetime.strptime("2024-12-14 12:14:00 -0500", "%Y-%m-%d %H:%M:%S %z")
+        date_diff: datetime.timedelta = self.gps_data.time - MIT_DECISION_DATE
         # this is the amount of time until the decision
         self.lcd_handler.display_text(
             Page.MIT_PAGE,
