@@ -324,7 +324,7 @@ class GPSDisplay:
         self.lcd_handler.display_text(
             Page.MIT_PAGE,
             [
-                "MIT Decision Countdown",
+                "MIT Countdown",
                 f"{date_diff.days} days, ",
                 f"{date_diff.seconds // 3600} hours, ",
                 f"{(date_diff.seconds // 60) % 60} minutes, ",
