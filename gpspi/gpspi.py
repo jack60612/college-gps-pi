@@ -46,7 +46,7 @@ class GPSDisplay:
 
         # Screen variables
         self.current_screen: Page = Page.TIME_AND_SATELLITES
-        self.total_screens: int = 6
+        self.total_screens: int = 7
         self.saved_data: SavedData = self.load_data()
         self.cur_waypoint_index: int = 0
 
@@ -313,8 +313,10 @@ class GPSDisplay:
             self.lcd_handler.display_text(Page.COORDINATES_AND_DISTANCE, ["No destination set"], buttons=buttons)
             
     def display_mit_page(self, button: Optional[LCDButton] = None) -> None:
+        cur_dt: datetime.datetime = self.gps_data.time
+        assert cur_dt is not None
         # MIT decision is around 12/14/2024, 12:14 pm EST
-        date_diff: datetime.timedelta = self.gps_data.time - time.strptime("2024-12-14 12:14:00", "%Y-%m-%d %H:%M:%S")
+        date_diff: datetime.timedelta = self.gps_data.time - datetime.datetime.strptime("2024-12-14 12:14:00 -0500", "%Y-%m-%d %H:%M:%S %z")
         # this is the amount of time until the decision
         self.lcd_handler.display_text(
             Page.MIT_PAGE,
