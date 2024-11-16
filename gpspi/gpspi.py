@@ -340,7 +340,7 @@ class GPSDisplay:
             while True:
                 self.update_gps_data()
                 self.update_display()
-                time.sleep(1)
+                time.sleep(0.01)
         except KeyboardInterrupt:
             pass  # gpiozero does not require explicit cleanup
 
